@@ -1,0 +1,192 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker volumes and data
+postgres/
+library/
+model-cache/
+ollama-data/
+
+# Photo processing directories and mount points
+/mnt/storage1/photo-test-inbox/
+/mnt/storage1/photo-test-processed/
+/mnt/storage1/photo-inbox/
+/mnt/storage1/photo-processed/
+/mnt/storage1/immich/
+/mnt/storage2/immich/
+
+# Photo processor runtime files
+photo-processor/processed_hashes.json
+processed_hashes.json
+**/processed_hashes.json
+photo-processor/temp/
+photo-processor/*.log
+photo-processor/__pycache__/
+photo-processor/.pytest_cache/
+photo-processor/*.pyc
+photo-processor/*.pyo
+photo-processor/*.pyd
+photo-processor/.Python
+photo-processor/build/
+photo-processor/develop-eggs/
+photo-processor/dist/
+photo-processor/downloads/
+photo-processor/eggs/
+photo-processor/.eggs/
+photo-processor/lib/
+photo-processor/lib64/
+photo-processor/parts/
+photo-processor/sdist/
+photo-processor/var/
+photo-processor/wheels/
+photo-processor/*.egg-info/
+photo-processor/.installed.cfg
+photo-processor/*.egg
+
+# Test data and outputs
+photo-processor/test-data/processed_*
+photo-processor/test-requirements.txt
+*.ARW
+*.CR2
+*.NEF
+*.DNG
+processed_*.jpg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Immich specific
+immich-dev/
+typescript-open-api/
+
+# Node modules (if any local development)
+node_modules/
+
+# Python virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.cer
+
+# Secrets and keys
+*_secret*
+*_key*
+*.secret
+*.key
+!immich-api-key.example
+*API_KEY*
+*PASSWORD*
+*TOKEN*
+CLOUDFLARE_TUNNEL_TOKEN*
+REGISTRATION_SECRET*
+SMB_PASSWORD*
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Media files (except test data)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+!photo-processor/test-data/**
+
+# Samba/network shares
+.smbdelete*
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# Local configuration overrides
+*.local
+*.local.*
+!example.local
+
+# Generated documentation
+docs/_build/
+docs/.doctrees/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# Unit test / coverage reports
+.tox/
+.nox/
+.pytest_cache/
+nosetests.xml
+test-results/
+
+# Immich registration
+immich-registration/node_modules/
+immich-registration/package-lock.json
+immich-registration/*.log
+
+# Import folders and test scripts
+import/*.ARW
+import/*.jpg
+import/*.jpeg
+import/*.png
+init-folders.sh
+test-api.sh
+!import/.gitkeep
+
+# Additional photo files with timestamps (new format)
+**/processed_*_*.jpg
+**/processed_*_*.jpeg
