@@ -48,10 +48,28 @@ photo-processor/*.egg
 # Test data and outputs
 photo-processor/test-data/processed_*
 photo-processor/test-requirements.txt
+# CRITICAL: NEVER track RAW files - they are too large for git
+# DO NOT COMMIT RAW FILES - they exceed GitHub's size limits
 *.ARW
+*.arw
 *.CR2
+*.cr2
 *.NEF
+*.nef
 *.DNG
+*.dng
+*.RAF
+*.raf
+*.ORF
+*.orf
+*.RW2
+*.rw2
+*.PEF
+*.pef
+*.SRW
+*.srw
+*.X3F
+*.x3f
 processed_*.jpg
 
 # IDE and editor files
