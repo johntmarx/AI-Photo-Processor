@@ -87,7 +87,8 @@ app.post('/api/register', async (req, res) => {
         name,
         password,
         quotaSizeInBytes,
-        storageLabel
+        storageLabel,
+        shouldChangePassword: false
       },
       {
         headers: {
