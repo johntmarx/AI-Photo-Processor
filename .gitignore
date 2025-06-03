@@ -45,6 +45,10 @@ photo-processor/*.egg-info/
 photo-processor/.installed.cfg
 photo-processor/*.egg
 
+# Working files - old versions, tests, and development files
+photo-processor/working_files/
+working_files/
+
 # Test data and outputs
 photo-processor/test-data/processed_*
 photo-processor/test-requirements.txt

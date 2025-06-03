@@ -6,9 +6,10 @@
 
 This directory is for test data, but RAW image files (ARW, CR2, NEF, DNG, etc.) must NEVER be committed to the git repository because:
 
-1. They exceed GitHub's recommended file size limit (50MB)
-2. They will bloat the repository size
-3. They are binary files that don't benefit from version control
+1. **PRIVACY**: These are private personal photos that should not be made public
+2. They exceed GitHub's recommended file size limit (50MB)
+3. They will bloat the repository size
+4. They are binary files that don't benefit from version control
 
 ## How to Use Test Data
 
