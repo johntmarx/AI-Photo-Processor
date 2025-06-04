@@ -3,17 +3,17 @@
 ## Access Points
 
 ### Registration Portal
-- **Local**: http://192.168.1.114/register  
-- **External**: https://photos.marxfamily.net/register
+- **Local**: http://YOUR-SERVER-IP/register  
+- **External**: https://your-domain.com/register
 
 ### Immich Photos
-- **Local**: http://192.168.1.114  
-- **External**: https://photos.marxfamily.net
+- **Local**: http://YOUR-SERVER-IP  
+- **External**: https://your-domain.com
 
 ## Registration Details
 
 ### Secret Key
-Your registration secret key is: `SummerField-TigerSharks-Photography-2025`
+Your registration secret key is: `[SET IN .env as REGISTRATION_SECRET]`
 
 **Important**: This key is required for anyone to register. Share it only with trusted users!
 
@@ -24,7 +24,7 @@ Your registration secret key is: `SummerField-TigerSharks-Photography-2025`
    - Full Name
    - Email Address  
    - Password (minimum 8 characters)
-   - **Registration Key**: `SummerField-TigerSharks-Photography-2025`
+   - **Registration Key**: `[Provided by administrator]`
    - Storage Quota (50GB to 1TB options)
 3. Upon successful registration, they're redirected to Immich login
 
@@ -48,12 +48,12 @@ Your registration secret key is: `SummerField-TigerSharks-Photography-2025`
 
 ### View All Users
 ```bash
-curl -s -X GET "http://192.168.1.114:2283/api/admin/users" \
-  -H "x-api-key: RvgMnUnKXrC0xuxWoUrsKcPJwujjbLFuIZeIO6w3M" | jq .
+curl -s -X GET "http://YOUR-SERVER-IP:2283/api/admin/users" \
+  -H "x-api-key: YOUR-IMMICH-API-KEY" | jq .
 ```
 
 ### Change Registration Key
-Edit `/home/john/immich/.env`:
+Edit your `.env` file:
 ```
 REGISTRATION_SECRET=your-new-secret-key
 ```
@@ -64,9 +64,7 @@ Then restart: `docker restart immich_registration`
 docker logs -f immich_registration
 ```
 
-## Current Users
-1. **john.t.marx@gmail.com** (Admin)
-2. **john@john.com** (500GB quota)
-3. **test@example.com** (Test user)
+## Managing Users
+View current users using the API command above.
 
 Your self-registration portal is now live and ready for users!

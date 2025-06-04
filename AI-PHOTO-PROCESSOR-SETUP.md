@@ -19,10 +19,10 @@ You now have a complete AI-powered photo processing pipeline that:
 
 ### 📁 **SMB File Shares**
 - **Container**: `immich_samba`
-- **Photo Inbox**: `//192.168.1.114/Photo Inbox` (drop files here)
-- **Photo Processed**: `//192.168.1.114/Photo Processed` (processed results)
+- **Photo Inbox**: `//YOUR-SERVER-IP/Photo Inbox` (drop files here)
+- **Photo Processed**: `//YOUR-SERVER-IP/Photo Processed` (processed results)
 - **Username**: `photos`
-- **Password**: `PhotoProcessor2025!`
+- **Password**: `[SET IN .env]`
 - **Port**: `445`
 
 ### 🔄 **Photo Processor Service**
@@ -105,13 +105,13 @@ The AI provides structured responses with:
 ## Network Access
 
 ### **SMB Shares** (from any computer on network):
-- **Windows**: `\\192.168.1.114\Photo Inbox`
-- **Mac**: `smb://192.168.1.114/Photo Inbox`
-- **Linux**: `smb://192.168.1.114/Photo Inbox`
+- **Windows**: `\\YOUR-SERVER-IP\Photo Inbox`
+- **Mac**: `smb://YOUR-SERVER-IP/Photo Inbox`
+- **Linux**: `smb://YOUR-SERVER-IP/Photo Inbox`
 
 ### **Direct API Access**:
-- **Ollama**: `http://192.168.1.114:11434`
-- **Immich**: `http://192.168.1.114` or `https://photos.marxfamily.net`
+- **Ollama**: `http://YOUR-SERVER-IP:11434`
+- **Immich**: `http://YOUR-SERVER-IP` or `https://your-domain.com`
 
 ## Usage Workflow
 

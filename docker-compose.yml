@@ -7,8 +7,8 @@ services:
     volumes:
       - ${UPLOAD_LOCATION}:/usr/src/app/upload
       - ${EXTERNAL_PATH}:/mnt/media/import:ro
-      - /mnt/storage1/immich:/mnt/storage1:rw
-      - /mnt/storage2/immich:/mnt/storage2:rw
+      - ${STORAGE1_PATH:-./storage1}/immich:/mnt/storage1:rw
+      - ${STORAGE2_PATH:-./storage2}/immich:/mnt/storage2:rw
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
@@ -114,8 +114,8 @@ services:
     build: ./photo-processor
     user: "1000:1000"
     volumes:
-      - /mnt/storage1/photo-inbox:/app/inbox:rw
-      - /mnt/storage1/photo-test-processed:/app/processed:rw
+      - ${PHOTO_INBOX_PATH:-./photo-processor/input}:/app/inbox:rw
+      - ${PHOTO_PROCESSED_PATH:-./photo-processor/output}:/app/processed:rw
       - /etc/localtime:/etc/localtime:ro
     environment:
       - OLLAMA_HOST=http://ollama:11434
@@ -138,8 +138,8 @@ services:
       - "138:138/udp"
       - "139:139"
     volumes:
-      - /mnt/storage1/photo-inbox:/photo-inbox:rw
-      - /mnt/storage1/photo-processed:/photo-processed:ro
+      - ${PHOTO_INBOX_PATH:-./photo-processor/input}:/photo-inbox:rw
+      - ${PHOTO_PROCESSED_PATH:-./photo-processor/output}:/photo-processed:ro
     environment:
       - USERID=1000
       - GROUPID=1000
