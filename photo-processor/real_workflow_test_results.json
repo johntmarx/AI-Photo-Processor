@@ -1,0 +1,45 @@
+{
+  "operations_test": {
+    "status": "success",
+    "operations_tested": [
+      "crop",
+      "enhance",
+      "denoise"
+    ],
+    "outputs_generated": [
+      "thumbnail",
+      "web",
+      "final"
+    ]
+  },
+  "recipe_creation": {
+    "status": "success",
+    "recipe_id": "3dbab9da-721d-4801-905d-8f9ac06f6e99",
+    "operations": 5
+  },
+  "photo_upload": {
+    "status": "success",
+    "uploaded_count": 3,
+    "photo_ids": [
+      "5a47e70d-b8d0-416d-82fe-60b0379cd1cf",
+      "1bf4e65a-8cfd-4294-91bd-46c534cd48c7",
+      "28a3c4ac-9bf4-4dc7-b8f1-996934172bf1"
+    ]
+  },
+  "batch_processing": {
+    "status": "success",
+    "queued": 3,
+    "skipped": 0
+  },
+  "queue_processing": {
+    "status": "success",
+    "processed": 3,
+    "expected": 3
+  },
+  "verification": {
+    "status": "success",
+    "verified": 3,
+    "total": 3,
+    "issues": []
+  }
+}

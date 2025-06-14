@@ -1,0 +1,1 @@
+- we run our project inside of docker containers. never attempt to run commands from our host. always use docker compose instead of docker-compose. our devices are not tty.

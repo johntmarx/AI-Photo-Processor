@@ -1,0 +1,46 @@
+FROM python:3.11-slim
+
+# Install system dependencies including CV2 requirements
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgl1-mesa-glx \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy and install requirements for both API and AI components
+COPY api/requirements.txt ./api_requirements.txt
+COPY ai-components/requirements.txt ./ai_requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r api_requirements.txt
+RUN pip install --no-cache-dir -r ai_requirements.txt
+
+# Copy the entire photo-processor directory structure
+COPY . /app/photo-processor/
+
+# Copy API specific files to app root
+COPY api/ /app/
+
+# Set up Python path to include both app and photo-processor
+ENV PYTHONPATH="/app:/app/photo-processor"
+
+# Create necessary directories
+RUN mkdir -p /app/data/{inbox,originals,processed,recipes,temp} /app/logs /app/model_cache
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Run with uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

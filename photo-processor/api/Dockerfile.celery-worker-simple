@@ -1,0 +1,36 @@
+# Simple Celery Worker for CPU tasks (no AI components)
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgl1-mesa-glx \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements files
+COPY api/requirements.txt .
+
+# Install Python dependencies (API only, no AI)
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY api ./api
+
+# Set environment variables
+ENV PYTHONPATH=/app:/app/api
+ENV C_FORCE_ROOT=1
+
+# Set working directory to api
+WORKDIR /app/api
+
+# Default command (will be overridden by docker-compose)
+CMD ["celery", "-A", "celery_app", "worker", "--loglevel=info"]

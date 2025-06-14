@@ -1,0 +1,156 @@
+name: immich
+
+services:
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    volumes:
+      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+      - ${EXTERNAL_PATH}:/mnt/media/import:ro
+      - ${STORAGE1_PATH:-./storage1}/immich:/mnt/storage1:rw
+      - ${STORAGE2_PATH:-./storage2}/immich:/mnt/storage2:rw
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - .env
+    ports:
+      - 2283:2283
+    depends_on:
+      - redis
+      - database
+    restart: always
+    healthcheck:
+      disable: false
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
+    volumes:
+      - model-cache:/cache
+    env_file:
+      - .env
+    restart: always
+    healthcheck:
+      disable: false
+
+  redis:
+    container_name: immich_redis
+    image: docker.io/valkey/valkey:8-bookworm
+    healthcheck:
+      test: valkey-cli ping || exit 1
+    restart: always
+
+  database:
+    container_name: immich_postgres
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - ${DB_DATA_LOCATION}:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' || exit 1; Chksum="$$(psql --dbname='${DB_DATABASE_NAME}' --username='${DB_USERNAME}' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
+      interval: 5m
+      start_interval: 30s
+      start_period: 5m
+    command: ["postgres", "-c", "shared_preload_libraries=vchord.so", "-c", "search_path=\"$$user\", public, vectors", "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    restart: always
+
+  immich-registration:
+    container_name: immich_registration
+    build: ./immich-registration
+    environment:
+      - PORT=3000
+      - REGISTRATION_SECRET=${REGISTRATION_SECRET}
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+    depends_on:
+      - immich-server
+    restart: always
+
+  nginx:
+    container_name: nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - immich-server
+      - immich-registration
+    restart: always
+
+  cloudflared:
+    container_name: immich_cloudflared
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - nginx
+    restart: always
+
+  ollama:
+    container_name: immich_ollama
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: always
+    
+  photo-processor:
+    container_name: immich_photo_processor
+    build: ./photo-processor
+    user: "1000:1000"
+    volumes:
+      - ${PHOTO_INBOX_PATH:-./photo-processor/input}:/app/inbox:rw
+      - ${PHOTO_PROCESSED_PATH:-./photo-processor/output}:/app/processed:rw
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+      - WATCH_FOLDER=/app/inbox
+      - OUTPUT_FOLDER=/app/processed
+      - DEBUG=true
+    depends_on:
+      - ollama
+      - immich-server
+    restart: always
+
+  samba:
+    container_name: immich_samba
+    image: dperson/samba
+    ports:
+      - "445:445"
+      - "137:137/udp"
+      - "138:138/udp"
+      - "139:139"
+    volumes:
+      - ${PHOTO_INBOX_PATH:-./photo-processor/input}:/photo-inbox:rw
+      - ${PHOTO_PROCESSED_PATH:-./photo-processor/output}:/photo-processed:ro
+    environment:
+      - USERID=1000
+      - GROUPID=1000
+    command: >
+      -n
+      -s "Photo Inbox;/photo-inbox;yes;no;no;all;none;all;'AI Photo Processing Inbox'"
+      -s "Photo Processed;/photo-processed;yes;no;yes;all;none;all;'AI Processed Photos'"
+      -u "photos;${SMB_PASSWORD}"
+      -w "WORKGROUP"
+    restart: always
+
+volumes:
+  model-cache:
+  ollama-data:

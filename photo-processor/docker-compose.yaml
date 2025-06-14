@@ -1,0 +1,210 @@
+services:
+  # Redis for Celery message broker
+  redis:
+    image: redis:7-alpine
+    container_name: photo_processor_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - photo-processor-net
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Photo Processor API
+  photo-processor-api:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile
+    container_name: photo_processor_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app/api
+      - ./ai_components:/app/ai_components
+      - ./data:/app/data
+    environment:
+      - PHOTO_DATA_PATH=/app/data
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/api:/app/ai_components
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - photo-processor-net
+      - immich_default
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/api
+
+  # Celery Worker for AI Analysis (GPU-intensive tasks)
+  celery-ai-worker:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile.celery-ai
+    container_name: photo_processor_celery_ai
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./api:/app/api
+      - ./ai_components:/app/ai_components
+      - ./data:/app/data
+      - ./model_cache:/app/model_cache
+    environment:
+      - PHOTO_DATA_PATH=/app/data
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/api:/app/ai_components
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - photo-processor-net
+      - immich_default
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: celery -A celery_app worker -Q ai_analysis --loglevel=info --concurrency=2
+
+  # Celery Worker for Image Processing (CPU-intensive tasks)  
+  celery-image-worker:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile.celery-worker-simple
+    container_name: photo_processor_celery_image
+    volumes:
+      - ./api:/app/api
+      - ./data:/app/data
+    environment:
+      - PHOTO_DATA_PATH=/app/data
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - photo-processor-net
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: celery -A celery_app worker -Q image_processing --loglevel=info --concurrency=4
+
+  # Celery Worker for Batch Operations
+  celery-batch-worker:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile.celery-worker-simple
+    container_name: photo_processor_celery_batch
+    volumes:
+      - ./api:/app/api
+      - ./data:/app/data
+    environment:
+      - PHOTO_DATA_PATH=/app/data
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - photo-processor-net
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: celery -A celery_app worker -Q batch_operations --loglevel=info --concurrency=2
+
+  # Celery Worker for System Tasks
+  celery-system-worker:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile.celery-worker-simple
+    container_name: photo_processor_celery_system
+    volumes:
+      - ./api:/app/api
+      - ./data:/app/data
+    environment:
+      - PHOTO_DATA_PATH=/app/data
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - photo-processor-net
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: celery -A celery_app worker -Q system --loglevel=info --concurrency=1
+
+  # Celery Beat for Scheduled Tasks
+  celery-beat:
+    build:
+      context: .
+      dockerfile: ./api/Dockerfile.celery-worker-simple
+    container_name: photo_processor_celery_beat
+    volumes:
+      - ./api:/app/api
+      - ./data:/app/data
+      - ./api/celerybeat-schedule:/app/api/celerybeat-schedule
+    environment:
+      - PHOTO_DATA_PATH=/app/data
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/api
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - photo-processor-net
+    restart: unless-stopped
+    depends_on:
+      - redis
+    command: celery -A celery_app beat --loglevel=info
+
+
+  # Photo Processor Frontend  
+  photo-processor-frontend:
+    build:
+      context: ./frontend-app
+      dockerfile: Dockerfile.dev
+    container_name: photo_processor_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend-app:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://photo-processor-api:8000
+      - REACT_APP_WS_URL=ws://photo-processor-api:8000
+    networks:
+      - photo-processor-net
+    restart: unless-stopped
+    command: npm run dev -- --host 0.0.0.0 --port 3000
+    depends_on:
+      - photo-processor-api
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  photo-processor-net:
+    driver: bridge
+  immich_default:
+    external: true

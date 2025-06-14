@@ -3,10 +3,12 @@ pydantic==2.10.4
 pillow==11.1.0
 rawpy==0.25.0
 opencv-python-headless==4.10.0.84
+opencv-contrib-python-headless==4.10.0.84
 numpy==2.2.1
 watchdog==6.0.0
 requests==2.32.3
 python-magic==0.4.27
 colorthief==0.2.1
 scikit-image==0.24.0
+scipy==1.14.1
 exifread==3.0.0

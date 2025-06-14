@@ -1,0 +1,34 @@
+{
+  "rotation": {
+    "status": "failed",
+    "error": "No module named 'exifread'"
+  },
+  "scene_analysis": {
+    "status": "failed",
+    "error": "No module named 'exifread'"
+  },
+  "culling": {
+    "status": "failed",
+    "error": "No module named 'exifread'"
+  },
+  "burst_grouping": {
+    "status": "failed",
+    "error": "No module named 'exifread'"
+  },
+  "object_detection": {
+    "status": "failed",
+    "error": "No module named 'rt_detr'"
+  },
+  "quality_assessment": {
+    "status": "failed",
+    "error": "cannot import name 'NIMAScorer' from 'nima.nima_model' (/app/ai-components/nima/nima_model.py)"
+  },
+  "segmentation": {
+    "status": "module_found",
+    "note": "Full SAM2 test requires model weights"
+  },
+  "raw_development": {
+    "status": "failed",
+    "error": "No module named 'exifread'"
+  }
+}

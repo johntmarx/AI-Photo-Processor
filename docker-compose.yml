@@ -109,25 +109,6 @@ services:
               capabilities: [gpu]
     restart: always
     
-  photo-processor:
-    container_name: immich_photo_processor
-    build: ./photo-processor
-    user: "1000:1000"
-    volumes:
-      - ${PHOTO_INBOX_PATH:-./photo-processor/input}:/app/inbox:rw
-      - ${PHOTO_PROCESSED_PATH:-./photo-processor/output}:/app/processed:rw
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
-      - IMMICH_API_URL=http://immich_server:2283
-      - IMMICH_API_KEY=${IMMICH_API_KEY}
-      - WATCH_FOLDER=/app/inbox
-      - OUTPUT_FOLDER=/app/processed
-      - DEBUG=true
-    depends_on:
-      - ollama
-      - immich-server
-    restart: always
 
   samba:
     container_name: immich_samba

@@ -1,0 +1,61 @@
+# Combined requirements for Celery AI Worker
+# This includes ALL dependencies from api, ai_components, and main requirements
+
+# From api/requirements.txt
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.18
+websockets==14.1
+aiofiles==24.1.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+httpx>=0.27.0,<0.28.0  # Compatible with ollama 0.4.4
+redis==5.2.1
+pillow==11.0.0
+numpy==1.26.4
+rawpy==0.19.1
+celery[redis]==5.4.0
+flower==2.0.1
+kombu==5.4.2
+aiosqlite==0.21.0
+watchdog==5.0.3
+requests==2.32.3
+opencv-python==4.10.0.84
+opencv-contrib-python==4.10.0.84
+scikit-image==0.24.0
+scipy==1.14.1
+
+# From main requirements.txt
+ollama==0.4.4
+python-magic==0.4.27
+colorthief==0.2.1
+exifread==3.0.0
+
+# From ai_components/requirements.txt
+torch>=2.1.0
+torchvision>=0.16.0
+gputil>=1.4.0
+psutil>=5.9.0
+ultralytics>=8.0.0
+ftfy>=6.1.0
+regex>=2023.10.0
+transformers==4.36.1
+accelerate>=0.25.0
+sentencepiece>=0.1.99
+protobuf>=3.20.0
+tqdm>=4.66.0
+pyyaml>=6.0
+scipy>=1.11.0
+rich>=13.7.0
+icecream>=2.1.3
+shapely>=2.0.0
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-benchmark>=4.0.0
+ipython>=8.17.0
+jupyter>=1.0.0
+matplotlib>=3.8.0

@@ -37,7 +37,11 @@ RUN useradd -m -u 1000 -s /bin/bash john
 RUN mkdir -p /app/inbox /app/processed /app/processed/originals /app/temp && \
     chown -R john:john /app
 
+# Ensure the directories are writable
+RUN chmod -R 755 /app/inbox /app/processed
+
 # Switch to non-root user
 USER john
 
+# Run the original main.py
 CMD ["python", "main.py"]

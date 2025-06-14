@@ -1,0 +1,43 @@
+# Celery AI Worker with GPU support
+FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgl1-mesa-glx \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy requirements files
+COPY api/requirements-all.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-all.txt
+
+# Copy application code
+COPY api ./api
+COPY ai_components ./ai_components
+
+# Set environment variables
+ENV PYTHONPATH=/app:/app/api:/app/ai_components
+ENV C_FORCE_ROOT=1
+ENV CUDA_VISIBLE_DEVICES=0
+ENV HF_HOME=/app/model_cache
+ENV TRANSFORMERS_CACHE=/app/model_cache
+
+# Create necessary directories
+RUN mkdir -p /app/model_cache
+
+# Set working directory to api
+WORKDIR /app/api
+
+# Default command
+CMD ["celery", "-A", "celery_app", "worker", "-Q", "ai_analysis", "--loglevel=info", "--concurrency=2"]

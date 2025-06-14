@@ -2,8 +2,48 @@
 
 An intelligent photo processing service that automatically analyzes, enhances, and uploads photos to your Immich instance. Designed specifically for high-volume photography workflows, particularly sports and event photography.
 
+## 🚀 Quick Start
+
+```bash
+# Clone and start the application
+git clone <repository-url>
+cd immich/photo-processor
+docker-compose up -d
+
+# Open the web interface
+open http://localhost
+```
+
+## 🎯 Project Status: Phase 2 Complete ✅
+
+- **Phase 0**: Original preservation ✅ (41/41 tests passing)
+- **Phase 1**: Backend API infrastructure ✅ (21/21 tests passing) 
+- **Phase 2**: Frontend development ✅ (74/74 tests passing)
+- **Phase 3**: AI model upgrades 🚧 (Ready to start)
+
+📊 **See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed progress**
+
+## 📚 Documentation
+
+### Project Management
+- [PROJECT_STATUS.md](PROJECT_STATUS.md) - Current project status and metrics
+- [implementation-roadmap.md](docs/implementation-roadmap.md) - Complete development roadmap
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Guide for migrating from v1 to v2
+
+### Architecture & Design
+- [architecture-design.md](docs/architecture-design.md) - System architecture overview
+- [frontend-implementation.md](docs/frontend-implementation.md) - Frontend architecture details
+- [component-api-reference.md](docs/component-api-reference.md) - API endpoint reference
+- [ai-models-implementation.md](docs/ai-models-implementation.md) - AI model integration plans
+
+### Development & Testing
+- [TESTING.md](TESTING.md) - Comprehensive testing guide
+- [lessons-learned-from-testing.md](docs/lessons-learned-from-testing.md) - Testing insights
+- [FINAL_TEST_RESULTS.md](FINAL_TEST_RESULTS.md) - Complete test results
+
 ## Features
 
+### Core Processing
 - **Automatic File Monitoring**: Watches designated folders for new photos (RAW and standard formats)
 - **AI-Powered Analysis**: Uses Ollama with Gemma3 model to understand photo content, composition, and quality
 - **Intelligent Processing**: 
@@ -14,33 +54,64 @@ An intelligent photo processing service that automatically analyzes, enhances, a
 - **RAW File Support**: Handles ARW, CR2, CR3, NEF, DNG, ORF, RW2, and more
 - **Immich Integration**: Seamlessly uploads processed photos with AI-generated metadata
 - **Duplicate Prevention**: SHA256-based hash tracking prevents reprocessing
-- **High Performance**: Processes high-resolution RAW files efficiently
+- **Original Preservation**: Dual upload system preserves original files
+
+### Web Interface (New in Phase 2)
+- **Real-time Dashboard**: Live statistics and processing status
+- **Photo Management**: Upload, view, compare original vs processed
+- **Recipe System**: Create, edit, and apply processing recipes
+- **Processing Queue**: Manual control with pause/resume/approve
+- **WebSocket Updates**: Real-time notifications and progress
+- **Responsive Design**: Works on desktop and mobile devices
+
+### API (New in Phase 1)
+- **RESTful API**: 40+ endpoints for complete control
+- **WebSocket Support**: Real-time event streaming
+- **No Authentication**: Designed for secure local networks
+- **Comprehensive Documentation**: Auto-generated API docs
 
 ## Architecture
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│   File System   │────▶│  Photo Processor │────▶│     Immich      │
-│  (watch folder) │     │                  │     │   (API upload)  │
+│   Web Frontend  │────▶│    FastAPI       │────▶│  Photo Processor│
+│  (React + TS)   │     │  Backend API     │     │   (Core Logic)  │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌──────────────┐
-                        │    Ollama    │
-                        │ (AI Analysis)│
-                        └──────────────┘
+         │                       │                         │
+         │                       ▼                         ▼
+         │              ┌──────────────────┐     ┌─────────────────┐
+         └─────────────▶│    WebSocket     │     │     Immich      │
+                        │  (Real-time)     │     │   (API upload)  │
+                        └──────────────────┘     └─────────────────┘
+                                                          │
+                                                          ▼
+                                                   ┌──────────────┐
+                                                   │    Ollama    │
+                                                   │ (AI Analysis)│
+                                                   └──────────────┘
 ```
 
 ## Components
 
 ### Core Services
-
-- **`main.py`**: Service orchestrator with file watching and processing pipeline
+- **`main_v2.py`**: Enhanced service orchestrator with recipe support
 - **`ai_analyzer.py`**: AI integration for image analysis using Ollama
-- **`image_processor_v2.py`**: Advanced image processing with RAW conversion and enhancement
-- **`immich_client.py`**: Immich API client for uploads and metadata management
+- **`image_processor_v2.py`**: Advanced image processing with RAW conversion
+- **`immich_client_v2.py`**: Enhanced Immich client with dual upload support
+- **`recipe_storage.py`**: Recipe management system
 - **`hash_tracker.py`**: Duplicate detection using file hashing
-- **`schemas.py`**: Pydantic models for structured data validation
+
+### API Backend
+- **`api/main.py`**: FastAPI application with WebSocket support
+- **`api/routes/`**: RESTful endpoints (photos, processing, recipes, stats)
+- **`api/services/`**: Business logic and WebSocket manager
+- **`api/models/`**: Pydantic models for validation
+
+### Frontend Application
+- **`frontend-app/`**: React TypeScript application
+- **Components**: Dashboard, PhotoGrid, RecipeEditor, ProcessingQueue
+- **Real-time**: WebSocket provider for live updates
+- **State Management**: React Query for server state
 
 ## Requirements
 
@@ -60,15 +131,26 @@ git clone <repository-url>
 cd immich/photo-processor
 ```
 
-2. Build the Docker image:
+2. Start the full stack application:
 ```bash
-docker build -t photo-processor .
+docker-compose up -d
+
+# Access the application:
+# Frontend: http://localhost:80
+# API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
 ```
 
-3. Run with docker-compose (see parent directory's docker-compose.yml):
+3. Individual components can be run separately:
 ```bash
-cd ..
-docker-compose up -d photo-processor
+# Just the photo processor
+docker-compose up -d processor
+
+# Just the API backend
+docker-compose up -d api
+
+# Just the frontend
+docker-compose up -d frontend
 ```
 
 ### Local Development
@@ -144,19 +226,40 @@ The AI analyzer detects:
 
 ## Testing
 
-Run the comprehensive test suite:
+The project includes comprehensive test suites for all components:
 
+### Backend Tests
 ```bash
-# All tests
+# Core processor tests (41 tests)
 pytest
+
+# API tests (21 tests)
+cd api && pytest
 
 # With coverage
 pytest --cov=. --cov-report=html
-
-# Specific test categories
-pytest tests/unit/
-pytest tests/integration/
 ```
+
+### Frontend Tests
+```bash
+# Frontend tests (74 tests)
+cd frontend-app
+npm test
+
+# With coverage
+npm run test:coverage
+
+# In watch mode
+npm run test:watch
+```
+
+### Docker-based Testing
+```bash
+# Run all tests in isolated containers
+./run_tests_docker.sh
+```
+
+**Total Test Coverage**: 136/136 tests passing (100%)
 
 See [TESTING.md](TESTING.md) for detailed testing documentation.
 

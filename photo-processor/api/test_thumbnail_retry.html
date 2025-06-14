@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thumbnail Retry Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .photo-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .photo-wrapper {
+            position: relative;
+            aspect-ratio: 1;
+            background: #e5e7eb;
+        }
+        .photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .loading-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+        }
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #6b7280;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-state {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+            color: #6b7280;
+        }
+        .photo-info {
+            padding: 16px;
+        }
+        .photo-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .photo-status {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-processing {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .status-completed {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .status-failed {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .retry-info {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        .log {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 4px;
+        }
+        .log-time {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Thumbnail Retry Logic Test</h1>
+        
+        <div class="controls">
+            <button onclick="addPhoto('processing')">Add Processing Photo</button>
+            <button onclick="addPhoto('pending')">Add Pending Photo</button>
+            <button onclick="addPhoto('completed')">Add Completed Photo</button>
+            <button onclick="simulateProcessingComplete()">Simulate Processing Complete</button>
+            <button onclick="clearPhotos()">Clear All</button>
+            <button onclick="toggleFailMode()">Toggle Fail Mode: <span id="failMode">OFF</span></button>
+        </div>
+
+        <div id="photoGrid" class="photo-grid"></div>
+        
+        <div class="log">
+            <h3>Event Log</h3>
+            <div id="eventLog"></div>
+        </div>
+    </div>
+
+    <script>
+        let photos = [];
+        let photoId = 1;
+        let failMode = false;
+        const retryDelays = [1000, 2000, 4000, 8000, 16000];
+        const maxRetries = 5;
+        const retryState = new Map(); // Track retry state for each photo
+
+        function log(message) {
+            const logEl = document.getElementById('eventLog');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">${time}</span> ${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+        }
+
+        function addPhoto(status) {
+            const photo = {
+                id: `photo-${photoId++}`,
+                filename: `IMG_${1000 + photoId}.jpg`,
+                status: status
+            };
+            photos.push(photo);
+            log(`Added ${status} photo: ${photo.filename}`);
+            renderPhotos();
+        }
+
+        function clearPhotos() {
+            photos = [];
+            retryState.clear();
+            log('Cleared all photos');
+            renderPhotos();
+        }
+
+        function toggleFailMode() {
+            failMode = !failMode;
+            document.getElementById('failMode').textContent = failMode ? 'ON' : 'OFF';
+            log(`Fail mode: ${failMode ? 'ON' : 'OFF'}`);
+        }
+
+        function simulateProcessingComplete() {
+            photos.forEach(photo => {
+                if (photo.status === 'processing' || photo.status === 'pending') {
+                    photo.status = 'completed';
+                    log(`Photo ${photo.filename} processing completed`);
+                    
+                    // Dispatch custom event like the real app would
+                    window.dispatchEvent(new CustomEvent('processing_completed', {
+                        detail: { data: { photo_id: photo.id, filename: photo.filename } }
+                    }));
+                }
+            });
+            renderPhotos();
+        }
+
+        function createPhotoElement(photo) {
+            const state = retryState.get(photo.id) || { retryCount: 0, status: 'loading' };
+            
+            const photoEl = document.createElement('div');
+            photoEl.className = 'photo-card';
+            photoEl.id = `card-${photo.id}`;
+            
+            const isRetrying = (photo.status === 'processing' || photo.status === 'pending') && state.status === 'loading';
+            
+            photoEl.innerHTML = `
+                <div class="photo-wrapper">
+                    ${isRetrying ? `
+                        <div class="loading-state">
+                            <div class="spinner"></div>
+                            <p style="margin-top: 8px; font-size: 12px; color: #6b7280;">
+                                ${photo.status === 'processing' ? 'Processing...' : 'Waiting...'}
+                            </p>
+                            ${state.retryCount > 0 ? `
+                                <p class="retry-info">Retry ${state.retryCount}/${maxRetries}</p>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    <img 
+                        id="img-${photo.id}"
+                        class="photo-img"
+                        src="/api/photos/${photo.id}/thumbnail?t=${Date.now()}"
+                        alt="${photo.filename}"
+                        style="${isRetrying ? 'opacity: 0' : 'opacity: 1'}"
+                        onload="handleImageLoad('${photo.id}')"
+                        onerror="handleImageError('${photo.id}')"
+                    />
+                    
+                    <div class="error-state" id="error-${photo.id}" style="display: none;">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <p style="margin-top: 8px; font-size: 12px;">
+                            ${photo.status === 'failed' ? 'Processing failed' : 'Thumbnail unavailable'}
+                        </p>
+                    </div>
+                </div>
+                <div class="photo-info">
+                    <div class="photo-title">${photo.filename}</div>
+                    <div class="photo-status">
+                        <span class="status-badge status-${photo.status}">${photo.status}</span>
+                    </div>
+                </div>
+            `;
+            
+            return photoEl;
+        }
+
+        function renderPhotos() {
+            const grid = document.getElementById('photoGrid');
+            grid.innerHTML = '';
+            photos.forEach(photo => {
+                grid.appendChild(createPhotoElement(photo));
+            });
+        }
+
+        window.handleImageLoad = function(photoId) {
+            const photo = photos.find(p => p.id === photoId);
+            if (!photo) return;
+            
+            log(`Thumbnail loaded: ${photo.filename}`);
+            retryState.set(photoId, { retryCount: 0, status: 'loaded' });
+            
+            // Hide loading state
+            const card = document.getElementById(`card-${photoId}`);
+            if (card) {
+                const loading = card.querySelector('.loading-state');
+                if (loading) loading.style.display = 'none';
+                const img = card.querySelector('.photo-img');
+                if (img) img.style.opacity = '1';
+            }
+        };
+
+        window.handleImageError = function(photoId) {
+            const photo = photos.find(p => p.id === photoId);
+            if (!photo) return;
+            
+            const state = retryState.get(photoId) || { retryCount: 0, status: 'loading' };
+            
+            // Simulate: In fail mode, thumbnails always fail to load
+            if (failMode || (photo.status === 'processing' || photo.status === 'pending')) {
+                if (state.retryCount < maxRetries) {
+                    const delay = retryDelays[Math.min(state.retryCount, retryDelays.length - 1)];
+                    log(`Thumbnail load failed for ${photo.filename}, retrying in ${delay}ms (attempt ${state.retryCount + 1}/${maxRetries})`);
+                    
+                    state.retryCount++;
+                    retryState.set(photoId, state);
+                    
+                    setTimeout(() => {
+                        // Re-render to update retry count
+                        const card = document.getElementById(`card-${photoId}`);
+                        if (card) {
+                            card.replaceWith(createPhotoElement(photo));
+                        }
+                    }, delay);
+                } else {
+                    log(`Max retries exceeded for ${photo.filename}`);
+                    state.status = 'error';
+                    retryState.set(photoId, state);
+                    
+                    // Show error state
+                    const card = document.getElementById(`card-${photoId}`);
+                    if (card) {
+                        const loading = card.querySelector('.loading-state');
+                        if (loading) loading.style.display = 'none';
+                        const error = card.querySelector('.error-state');
+                        if (error) error.style.display = 'flex';
+                    }
+                }
+            } else {
+                // Show error immediately for completed/failed photos
+                log(`Thumbnail permanently unavailable for ${photo.filename}`);
+                state.status = 'error';
+                retryState.set(photoId, state);
+                
+                const card = document.getElementById(`card-${photoId}`);
+                if (card) {
+                    const error = card.querySelector('.error-state');
+                    if (error) error.style.display = 'flex';
+                }
+            }
+        };
+
+        // Listen for processing complete events
+        window.addEventListener('processing_completed', (event) => {
+            const photoId = event.detail?.data?.photo_id;
+            if (photoId) {
+                const photo = photos.find(p => p.id === photoId);
+                if (photo) {
+                    photo.status = 'completed';
+                    // Reset retry state and re-render
+                    retryState.delete(photoId);
+                    const card = document.getElementById(`card-${photoId}`);
+                    if (card) {
+                        card.replaceWith(createPhotoElement(photo));
+                    }
+                }
+            }
+        });
+
+        // Initial render
+        renderPhotos();
+    </script>
+</body>
+</html>

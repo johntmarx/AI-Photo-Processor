@@ -1,0 +1,55 @@
+# Enhanced Photo Processor with Original Preservation
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libraw-dev \
+    libgomp1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Create necessary directories
+RUN mkdir -p /app/inbox \
+    /app/data/originals \
+    /app/data/processed \
+    /app/data/working \
+    /app/data/recipes \
+    /app/logs
+
+# Copy application files
+COPY *.py ./
+COPY schemas.py ./
+
+# Create a version file to track the new version
+RUN echo "2.0.0" > /app/VERSION
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV INBOX_FOLDER=/app/inbox
+ENV PRESERVE_ORIGINALS=true
+ENV DUAL_UPLOAD=true
+
+# Create volume mount points
+VOLUME ["/app/inbox", "/app/data", "/app/logs"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import os; exit(0 if os.path.exists('/app/logs/photo_processor.log') else 1)"
+
+# Run the enhanced processor
+CMD ["python", "main_v2.py"]

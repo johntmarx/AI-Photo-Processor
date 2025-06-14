@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Photo Processor API with AI Integration
+  photo-processor-api:
+    build:
+      context: ./photo-processor
+      dockerfile: api/Dockerfile
+    container_name: photo_processor_api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the entire photo-processor directory for AI components access
+      - ./photo-processor:/app/photo-processor:ro
+      # Data volumes
+      - ./photo-processor/data:/app/data
+      - ./photo-processor/logs:/app/logs
+      # Model cache for AI components
+      - ./photo-processor/ai-components/model_cache:/app/model_cache
+    environment:
+      - PYTHONPATH=/app:/app/photo-processor
+      - PHOTO_DATA_PATH=/app/data
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+      - OLLAMA_HOST=http://immich_ollama:11434
+      - PYTHONUNBUFFERED=1
+    networks:
+      - immich_default
+    restart: unless-stopped
+    depends_on:
+      - photo-processor-worker
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Photo Processor Frontend
+  photo-processor-frontend:
+    build:
+      context: ./photo-processor/frontend-app
+      dockerfile: Dockerfile
+    container_name: photo_processor_frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WS_URL=ws://localhost:8000
+    networks:
+      - immich_default
+    restart: unless-stopped
+    depends_on:
+      - photo-processor-api
+
+  # AI Processing Worker
+  photo-processor-worker:
+    build:
+      context: ./photo-processor
+      dockerfile: Dockerfile.v2
+    container_name: photo_processor_worker
+    volumes:
+      - ./photo-processor:/app
+      - ./photo-processor/data:/app/data
+      - ./photo-processor/logs:/app/logs
+      - ./photo-processor/ai-components/model_cache:/app/model_cache
+    environment:
+      - PYTHONPATH=/app
+      - INBOX_FOLDER=/app/data/inbox
+      - IMMICH_API_URL=http://immich_server:2283
+      - IMMICH_API_KEY=${IMMICH_API_KEY}
+      - OLLAMA_HOST=http://immich_ollama:11434
+      - ENABLE_AI_PROCESSING=true
+      - USE_V2_PROCESSOR=true
+    networks:
+      - immich_default
+    restart: unless-stopped
+    command: python main_v2.py
+
+networks:
+  immich_default:
+    external: true

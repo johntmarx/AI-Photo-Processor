@@ -19,10 +19,11 @@ from typing import Optional
 import ollama
 from schemas import PhotoAnalysis
 import json
+from ai_components.shared.ollama_vlm_base import OllamaVLMBase
 
 logger = logging.getLogger(__name__)
 
-class AIAnalyzer:
+class AIAnalyzer(OllamaVLMBase):
     """
     AI photo analyzer using Ollama for intelligent image analysis.
     
@@ -39,6 +40,10 @@ class AIAnalyzer:
             ollama_host: URL of the Ollama service endpoint
             model: Name of the model to use (default: gemma3:12b for vision capabilities)
         """
+        # Initialize parent class for structured output support
+        super().__init__(ollama_host=ollama_host, model=model)
+        
+        # Keep backward compatibility
         self.ollama_host = ollama_host
         self.model = model
         self.client = ollama.Client(host=ollama_host)

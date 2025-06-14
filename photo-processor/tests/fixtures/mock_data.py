@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import tempfile
 import os
-from schemas import PhotoAnalysis, BoundingBox, CropSuggestion, ColorAnalysis, SwimmingContext
+from schemas import PhotoAnalysis, BoundingBox, CropSuggestion, ColorAnalysis, SwimmingEventContext
 
 
 class MockImageData:
@@ -73,7 +73,7 @@ class MockPhotoAnalysisData:
                 brightness_adjustment_needed=0,
                 contrast_adjustment_needed=5
             ),
-            swimming_context=SwimmingContext(
+            swimming_context=SwimmingEventContext(
                 event_type="freestyle",
                 pool_type="indoor",
                 time_of_event="mid_race",
@@ -104,7 +104,7 @@ class MockPhotoAnalysisData:
                 brightness_adjustment_needed=20,
                 contrast_adjustment_needed=15
             ),
-            swimming_context=SwimmingContext(
+            swimming_context=SwimmingEventContext(
                 event_type="freestyle",
                 pool_type="indoor",
                 time_of_event="start",
@@ -135,7 +135,7 @@ class MockPhotoAnalysisData:
                 brightness_adjustment_needed=-5,
                 contrast_adjustment_needed=10
             ),
-            swimming_context=SwimmingContext(
+            swimming_context=SwimmingEventContext(
                 event_type="relay",
                 pool_type="outdoor",
                 time_of_event="mid_race",
@@ -166,7 +166,7 @@ class MockPhotoAnalysisData:
                 brightness_adjustment_needed=3,
                 contrast_adjustment_needed=0
             ),
-            swimming_context=SwimmingContext(
+            swimming_context=SwimmingEventContext(
                 event_type="backstroke",
                 pool_type="indoor",
                 time_of_event="finish",
@@ -197,7 +197,7 @@ class MockPhotoAnalysisData:
                 brightness_adjustment_needed=15,
                 contrast_adjustment_needed=20
             ),
-            swimming_context=SwimmingContext(
+            swimming_context=SwimmingEventContext(
                 event_type="butterfly",
                 pool_type="indoor",
                 time_of_event="mid_race",
